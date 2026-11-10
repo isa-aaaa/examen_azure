@@ -33,6 +33,9 @@
 				},
 				{
 					"name": "derivedColumn3"
+				},
+				{
+					"name": "flatten1"
 				}
 			],
 			"scriptLines": [
@@ -47,8 +50,14 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> source1",
 				"source1 derive(icd_code = split(upper(regexReplace(toString(icd_code), '[ ]', '')), ',')) ~> derivedColumn1",
-				"derivedColumn3 derive(severity = case(lower(trim(severity)) == 'mild', 'Mild',      lower(trim(severity)) == 'moderate', 'Moderate',      lower(trim(severity)) == 'severe', 'Severe',      lower(trim(severity)) == 'critical', 'Critical',      toString(null()))) ~> derivedColumn2",
+				"flatten1 derive(severity = case(lower(trim(flatten1@severity)) == 'mild', 'Mild',      lower(trim(flatten1@severity)) == 'moderate', 'Moderate',      lower(trim(flatten1@severity)) == 'severe', 'Severe',      lower(trim(flatten1@severity)) == 'critical', 'Critical',      toString(null()))) ~> derivedColumn2",
 				"derivedColumn1 derive(icd_list = split(upper(regexReplace(toString(icd_code), '[ ]', '')), ',')) ~> derivedColumn3",
+				"derivedColumn3 foldDown(unroll(icd_list, icd_list),",
+				"     mapColumn(",
+				"          each(match(true()))",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
 				"derivedColumn2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
