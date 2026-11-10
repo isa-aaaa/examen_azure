@@ -9,7 +9,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "silver_diagnosticos_sql",
+						"referenceName": "bronze_diagnosticos_csv",
 						"type": "DatasetReference"
 					},
 					"name": "source1"
@@ -18,7 +18,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "bronze_diagnosticos_csv",
+						"referenceName": "silver_diagnosticos_sql",
 						"type": "DatasetReference"
 					},
 					"name": "sink1"
@@ -30,6 +30,9 @@
 				},
 				{
 					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
 				}
 			],
 			"scriptLines": [
@@ -42,10 +45,10 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> source1",
+				"     ignoreNoFilesFound: false) ~> source1",
 				"source1 derive(icd_code = split(upper(regexReplace(toString(icd_code), '[ ]', '')), ',')) ~> derivedColumn1",
-				"derivedColumn1 derive(severity = case(lower(trim(severity)) == 'mild', 'Mild',      lower(trim(severity)) == 'moderate', 'Moderate',      lower(trim(severity)) == 'severe', 'Severe',      lower(trim(severity)) == 'critical', 'Critical',      toString(null()))) ~> derivedColumn2",
+				"derivedColumn3 derive(severity = case(lower(trim(severity)) == 'mild', 'Mild',      lower(trim(severity)) == 'moderate', 'Moderate',      lower(trim(severity)) == 'severe', 'Severe',      lower(trim(severity)) == 'critical', 'Critical',      toString(null()))) ~> derivedColumn2",
+				"derivedColumn1 derive(icd_list = split(upper(regexReplace(toString(icd_code), '[ ]', '')), ',')) ~> derivedColumn3",
 				"derivedColumn2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -55,11 +58,21 @@
 				"          diagnosis_description as string,",
 				"          severity as string",
 				"     ),",
-				"     umask: 0022,",
-				"     preCommands: [],",
-				"     postCommands: [],",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          diagnosis_id,",
+				"          admission_id,",
+				"          icd_code,",
+				"          diagnosis_description,",
+				"          severity",
+				"     )) ~> sink1"
 			]
 		}
 	}
