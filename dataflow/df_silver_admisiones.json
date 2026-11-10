@@ -1,0 +1,78 @@
+{
+	"name": "df_silver_admisiones",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "silver_admisiones_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "bronze_admisiones_csv",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
+				}
+			],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false) ~> source1",
+				"source(output(",
+				"          admission_id as string,",
+				"          patient_id as string,",
+				"          admission_date as string,",
+				"          discharge_date as string,",
+				"          department as string,",
+				"          attending_doctor_id as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
+				"source2 derive(admission_date = case(regexMatch(admission_date, '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'), toDate(admission_date, 'yyyy-MM-dd'),      regexMatch(admission_date, '^[0-9]{2}-[0-9]{2}-[0-9]{2}$'), toDate(admission_date, 'MM-dd-yy'),      regexMatch(admission_date, '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'), toDate(admission_date, 'MM/dd/yyyy'),      regexMatch(admission_date, '^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'), toDate(admission_date, 'dd-MMM-yyyy'),      regexMatch(admission_date, '^[A-Za-z]+ [0-9]{1,2}, [0-9]{4}$'), toDate(admission_date, 'MMMM dd, yyyy'),      toDate(toString(null()))),",
+				"          discharge_date = case(regexMatch(admission_date, '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'), toDate(admission_date, 'yyyy-MM-dd'),      regexMatch(admission_date, '^[0-9]{2}-[0-9]{2}-[0-9]{2}$'), toDate(admission_date, 'MM-dd-yy'),      regexMatch(admission_date, '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'), toDate(admission_date, 'MM/dd/yyyy'),      regexMatch(admission_date, '^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'), toDate(admission_date, 'dd-MMM-yyyy'),      regexMatch(admission_date, '^[A-Za-z]+ [0-9]{1,2}, [0-9]{4}$'), toDate(admission_date, 'MMMM dd, yyyy'),      toDate(toString(null())))) ~> derivedColumn1",
+				"derivedColumn1 derive(department = case(regexMatch(lower(trim(department)), '^(general ?surgery|gen surg)$'), 'General Surgery',      regexMatch(lower(trim(department)), '^(cardiology|cardiolgy|cardio)$'), 'Cardiology',      regexMatch(lower(trim(department)), '^(emergency|emergancy|er)$'), 'Emergency',      regexMatch(lower(trim(department)), '^(pediatrics|paediatrics|peds)$'), 'Pediatrics',      regexMatch(lower(trim(department)), '^(oncology|oncologyy|onco)$'), 'Oncology',      regexMatch(lower(trim(department)), '^(neurology|nuerology|neuro)$'), 'Neurology',      regexMatch(lower(trim(department)), '^(orthopedics|orthopaedics|ortho)$'), 'Orthopedics',      'Unknown')) ~> derivedColumn2",
+				"derivedColumn2 derive(discharge_date = iif(discharge_date < admission_date, toDate(toString(null())), discharge_date)) ~> derivedColumn3",
+				"derivedColumn3 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          admission_id as string,",
+				"          patient_id as string,",
+				"          admission_date as string,",
+				"          discharge_date as string,",
+				"          department as string,",
+				"          attending_doctor_id as string",
+				"     ),",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
+			]
+		}
+	}
+}
