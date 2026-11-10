@@ -1,0 +1,49 @@
+{
+	"name": "bronze_facturacion_csv",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "adl_hospital",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "Facturacion.csv",
+				"folderPath": "datos_csv",
+				"fileSystem": "raw"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "billing_id",
+				"type": "String"
+			},
+			{
+				"name": "admission_id",
+				"type": "String"
+			},
+			{
+				"name": "charge_type",
+				"type": "String"
+			},
+			{
+				"name": "amount",
+				"type": "String"
+			},
+			{
+				"name": "payment_status",
+				"type": "String"
+			},
+			{
+				"name": "payment_date",
+				"type": "String"
+			}
+		]
+	}
+}
