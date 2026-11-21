@@ -30,7 +30,7 @@
 			}
 		],
 		"typeProperties": {
-			"schema": "bronze",
+			"schema": "silver",
 			"table": "diagnoses"
 		}
 	}
