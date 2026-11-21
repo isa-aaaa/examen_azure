@@ -1,0 +1,69 @@
+{
+	"name": "df_silver_facturacion",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "bronze_facturacion_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "silver_facturacion_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          billing_id as string,",
+				"          admission_id as string,",
+				"          charge_type as string,",
+				"          amount as string,",
+				"          payment_status as string,",
+				"          payment_date as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 derive(amount = iif(isNull(amount) || trim(amount) == '', toDecimal(toString(null()), 12, 2),     toDecimal(round(toDouble(regexReplace(amount, '[^0-9.-]', '')), 2), 12, 2)),",
+				"          payment_status = initCap(lower(trim(payment_status))),",
+				"          charge_type = iif(isNull(charge_type) || trim(charge_type) == '', 'Unknown', trim(charge_type)),",
+				"          payment_date = case(regexMatch(payment_date, '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'), toDate(payment_date, 'yyyy-MM-dd'),      regexMatch(payment_date, '^[0-9]{2}-[0-9]{2}-[0-9]{2}$'), toDate(payment_date, 'MM-dd-yy'),      regexMatch(payment_date, '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'), toDate(payment_date, 'MM/dd/yyyy'),      regexMatch(payment_date, '^[0-9]{2}-[A-Za-z]{3}-[0-9]{4}$'), toDate(payment_date, 'dd-MMM-yyyy'),      regexMatch(payment_date, '^[A-Za-z]+ [0-9]{1,2}, [0-9]{4}$'), toDate(payment_date, 'MMMM dd, yyyy'),      toDate(toString(null())))) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          billing_id as integer,",
+				"          admission_id as integer,",
+				"          charge_type as string,",
+				"          amount as decimal(12,2),",
+				"          payment_status as string,",
+				"          payment_date as date",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}
