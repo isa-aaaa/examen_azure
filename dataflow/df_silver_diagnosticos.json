@@ -13,6 +13,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "silver_admisiones_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
 				}
 			],
 			"sinks": [
@@ -33,6 +40,9 @@
 				},
 				{
 					"name": "derivedColumn3"
+				},
+				{
+					"name": "exists1"
 				}
 			],
 			"scriptLines": [
@@ -46,10 +56,25 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> source1",
+				"source(output(",
+				"          admission_id as string,",
+				"          patient_id as string,",
+				"          admission_date as string,",
+				"          discharge_date as string,",
+				"          department as string,",
+				"          attending_doctor_id as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
 				"source1 derive(icd_code = split(upper(regexReplace(toString(icd_code), '[ ]', '')), ',')) ~> derivedColumn1",
 				"derivedColumn3 derive(severity = case(lower(trim(severity)) == 'mild', 'Mild',      lower(trim(severity)) == 'moderate', 'Moderate',      lower(trim(severity)) == 'severe', 'Severe',      lower(trim(severity)) == 'critical', 'Critical',      toString(null()))) ~> derivedColumn2",
 				"derivedColumn1 derive(icd_list = split(upper(regexReplace(toString(icd_code), '[ ]', '')), ',')) ~> derivedColumn3",
-				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"derivedColumn2, source2 exists(source1@admission_id == source2@admission_id,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> exists1",
+				"exists1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          diagnosis_id as string,",
@@ -63,6 +88,7 @@
 				"     updateable:false,",
 				"     upsertable:false,",
 				"     format: 'table',",
+				"     preSQLs:['DELETE FROM silver.diagnoses;'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
