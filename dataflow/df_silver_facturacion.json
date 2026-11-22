@@ -16,7 +16,7 @@
 				},
 				{
 					"dataset": {
-						"referenceName": "bronze_admisiones_csv",
+						"referenceName": "silver_admisiones_sql",
 						"type": "DatasetReference"
 					},
 					"name": "origenAdmisiones"
@@ -61,7 +61,8 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> origenAdmisiones",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> origenAdmisiones",
 				"source1 derive(amount = iif(isNull(amount) || trim(amount) == '', toDecimal(toString(null()), 12, 2),     toDecimal(round(toDouble(regexReplace(amount, '[^0-9.-]', '')), 2), 12, 2)),",
 				"          payment_status = initCap(lower(trim(payment_status))),",
 				"          charge_type = iif(isNull(charge_type) || trim(charge_type) == '', 'Unknown', trim(charge_type)),",
