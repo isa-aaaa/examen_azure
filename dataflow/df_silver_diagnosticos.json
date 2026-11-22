@@ -88,7 +88,6 @@
 				"     updateable:false,",
 				"     upsertable:false,",
 				"     format: 'table',",
-				"     preSQLs:['DELETE FROM silver.diagnoses;'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
