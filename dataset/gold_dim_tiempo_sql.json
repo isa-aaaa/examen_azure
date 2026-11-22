@@ -1,0 +1,54 @@
+{
+	"name": "gold_dim_tiempo_sql",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sql_hospital",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "fecha_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fecha",
+				"type": "date"
+			},
+			{
+				"name": "anio",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "mes",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nombre_mes",
+				"type": "varchar"
+			},
+			{
+				"name": "dia",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "dia_semana",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nombre_dia",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "gold",
+			"table": "dim_tiempo"
+		}
+	}
+}
