@@ -1,0 +1,68 @@
+{
+	"name": "df_gold_dim_paciente",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "silver_pacientes_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_paciente_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          patient_id as string,",
+				"          full_name as string,",
+				"          gender as string,",
+				"          date_of_birth as string,",
+				"          phone as string,",
+				"          email as string,",
+				"          address as string,",
+				"          insurance_provider as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT patient_id AS patient_id_bk,\\n       full_name AS nombre_completo,\\n       COALESCE(gender, \\'Desconocido\\') AS genero,\\n       date_of_birth AS fecha_nacimiento,\\n       CASE WHEN date_of_birth IS NULL THEN \\'Desconocido\\'\\n            WHEN DATEDIFF(year, date_of_birth, GETDATE()) < 18 THEN \\'0-17\\'\\n            WHEN DATEDIFF(year, date_of_birth, GETDATE()) < 30 THEN \\'18-29\\'\\n            WHEN DATEDIFF(year, date_of_birth, GETDATE()) < 45 THEN \\'30-44\\'\\n            WHEN DATEDIFF(year, date_of_birth, GETDATE()) < 60 THEN \\'45-59\\'\\n            ELSE \\'60+\\' END AS rango_etario,\\n       email AS correo_electronico,\\n       address AS direccion,\\n       COALESCE(insurance_provider, \\'Desconocido\\') AS proveedor_seguro\\nFROM silver.patients',",
+				"     format: 'query') ~> source1",
+				"source1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          paciente_key as integer,",
+				"          patient_id_bk as integer,",
+				"          nombre_completo as string,",
+				"          genero as string,",
+				"          fecha_nacimiento as date,",
+				"          rango_etario as string,",
+				"          correo_electronico as string,",
+				"          direccion as string,",
+				"          proveedor_seguro as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

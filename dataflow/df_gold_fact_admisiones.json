@@ -1,0 +1,67 @@
+{
+	"name": "df_gold_fact_admisiones",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "silver_admisiones_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_fact_admisiones_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          admission_id as string,",
+				"          patient_id as string,",
+				"          admission_date as string,",
+				"          discharge_date as string,",
+				"          department as string,",
+				"          attending_doctor_id as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT a.admission_id AS admission_id_bk,\\n       p.paciente_key,\\n       d.departamento_key,\\n       g.diagnostico_key,\\n       YEAR(a.admission_date)*10000 + MONTH(a.admission_date)*100 + DAY(a.admission_date) AS fecha_ingreso_key,\\n       YEAR(a.discharge_date)*10000 + MONTH(a.discharge_date)*100 + DAY(a.discharge_date) AS fecha_alta_key,\\n       a.attending_doctor_id AS medico_id,\\n       DATEDIFF(day, a.admission_date, a.discharge_date) AS dias_estancia,\\n       1 AS conteo_admisiones\\nFROM silver.admissions a\\nJOIN gold.dim_paciente p       ON p.patient_id_bk = a.patient_id\\nJOIN gold.dim_departamento d   ON d.nombre_departamento = a.department\\nJOIN silver.diagnoses dx       ON dx.admission_id = a.admission_id\\nJOIN gold.dim_diagnostico g    ON g.codigo_icd = dx.icd_code\\n                              AND g.nivel_severidad = COALESCE(dx.severity, \\'Desconocido\\')',",
+				"     format: 'query') ~> source1",
+				"source1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          admision_key as long,",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          diagnostico_key as integer,",
+				"          fecha_ingreso_key as integer,",
+				"          fecha_alta_key as integer,",
+				"          medico_id as integer,",
+				"          dias_estancia as integer,",
+				"          conteo_admisiones as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}
